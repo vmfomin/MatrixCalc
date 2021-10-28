@@ -9,12 +9,11 @@
 
 #pragma once
 
-#include <algorithm>
 #include <iostream>
 #include <iterator>
+#include <optional>
 #include <vector>
 
-// TODO определитель Determinant
 // TODO обратная матрица Invertible matrix
 
 namespace matrix {
@@ -81,6 +80,36 @@ class Matrix {
     for (size_t i = 0; i < row_; ++i)
       for (size_t j = 0; j < col_; ++j) transpose[j][i] = matrix_[i][j];
     std::swap(matrix_, transpose);
+  }
+
+  [[nodiscard]] std::optional<T> Determinant() {
+    if (row_ != col_) return {};
+    // TODO добавить многопоточку
+    return DeterminantImpl(matrix_);
+  }
+
+  T DeterminantImpl(const Matrix_t<T>& minor) {
+    if (minor.size() == 2)
+      return minor[0][0] * minor[1][1] - minor[1][0] * minor[0][1];
+
+    int64_t det = 0;
+    Matrix_t<T> tmp(row_ - 1, std::vector<T>(col_ - 1));
+    int16_t sign = -1;
+    for (size_t i = 0; i < row_; ++i) {
+      for (size_t j = 0; j < col_ - 1; ++j) {
+        size_t col = 0;
+        for (size_t k = 0; k < col_; ++k) {
+          if (k == i) continue;
+          tmp[j][col] = matrix_[j + 1][k];
+          ++col;
+        }
+      }
+
+      // TODO добавить многопоточку
+      sign = ~sign + 1;
+      det += sign * DeterminantImpl(tmp) * matrix_[0][i];
+    }
+    return det;
   }
 
   void Print() const {
